@@ -1,0 +1,6 @@
+const CACHE='trajectiq-4.0.0';
+const ASSETS=['./','./index.html','./styles.css','./icon.svg','./ui/app.js','./ui/scene.js','./ui/space3d.js','./data/nasa.js','./data/catalog.js','./engine/model.js','./engine/assistant.js','./engine/copilot.js'];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('trajectiq-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+// Network first refreshes the game when online; the complete cached snapshot works offline.
+self.addEventListener('fetch',event=>{if(event.request.method!=='GET'||new URL(event.request.url).origin!==self.location.origin)return;event.respondWith(fetch(event.request).then(response=>{if(response.ok&&response.type!=='opaque'&&!response.redirected){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)));}return response;}).catch(()=>caches.match(event.request).then(cached=>cached||new Response('This page is not cached yet. Reconnect once to load the game.',{status:503,headers:{'Content-Type':'text/plain'}}))));});
